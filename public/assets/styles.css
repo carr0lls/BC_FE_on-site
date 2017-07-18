@@ -1,0 +1,118 @@
+*,
+*:before,
+*:after {
+  box-sizing: border-box;
+  font-family: sans-serif;
+  font-weight: 100;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  height: 100%;
+  color: #193A54;  
+}
+
+#content {
+
+}
+
+.header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* above 3 settings create veritcal centering */          
+  width: 100%;
+  height: 100px;
+  background: #193A54; 
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.file-manager {
+  height: 100%;
+  padding: 10px;
+}
+
+.file-manager .file-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.6rem;
+}
+
+.file-manager .file-header .directory-menu {
+  
+}
+
+.file-manager .file-header .directory-menu label {
+
+}
+
+.file-manager .file-header .directory-menu div {
+  display: inline-block;
+  margin-left: 10px;
+}
+
+.file-manager .file-header .actions {
+
+}
+
+.file-manager .file-list {
+
+}
+
+.file-manager .file-list {
+  margin: 0;
+  padding: 0;
+}
+.file-manager .file-list li {
+  display: flex;
+  border-bottom: 1px dotted gray;
+  list-style: none;
+  padding: 10px 0;
+  width: 100%;
+}
+.file-manager .file-list li.hidden {
+  display: none;
+}
+.file-manager .file-list li.toggled {
+  background: #FF8F12;
+}
+.file-manager .file-list li div {
+  display: inline-block;
+  padding: 10px;
+  width: 100%;
+}
+.file-manager .file-list li form {
+  width: 100%;
+}
+.file-manager .file-list li input[type="text"] {
+  padding: .6rem .5rem;
+  font-size: 1rem;
+  width: 35%;
+}
+.file-manager .file-list .name {
+  width: 70%;
+}
+.file-manager .file-list .type {
+  width: 20%;
+}
+.file-manager .file-list .size {
+  width: 10%;
+}
+
+.btn {
+  margin: 0 10px;
+  padding: 10px 20px;
+  background: #FF8F12;
+  color: #fff;
+  font-size: 1rem;
+  border-radius: 5px;
+  border: 1px solid #FF8F12;
+}
+.btn:hover {
+  background: #193A54;
+  border: 1px solid #193A54;
+  cursor: pointer;
+}

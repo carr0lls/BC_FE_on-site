@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import classnames from 'classnames';
+import axios from 'axios';
 
       const App = () => {
         return (
@@ -29,30 +30,32 @@ import classnames from 'classnames';
             showNewFolderForm: false,
             newFolderName: ''
           };
-          this.parseData = this.parseData.bind(this);
+          this.fetchFiles = this.fetchFiles.bind(this);
+          this.updateFiles = this.updateFiles.bind(this);
           this.uploadFile = this.uploadFile.bind(this);
           this.createFolder = this.createFolder.bind(this);
           this.createNewFolderForm = this.createNewFolderForm.bind(this);
           this.updateNewFolderName = this.updateNewFolderName.bind(this);
           this.toggleFile = this.toggleFile.bind(this);
           this.fileClick = this.fileClick.bind(this);
-          this.downloadFile = this.downloadFile(this);
+          this.downloadFile = this.downloadFile.bind(this);
         }
 
         componentDidMount() {
-          fetch('http://localhost:8080/api/files')
-            .then((data) => {
-              return data.json();
-            })
-            .then(this.parseData)
-            .catch((err) => {
-              console.log(err);
+          this.fetchFiles();
+        }
+
+        fetchFiles() {
+          axios.get('http://localhost:8080/api/files')
+            .then(this.updateFiles)
+            .catch(function (error) {
+              console.log(error);
             });
         }
 
-        parseData(data) {
+        updateFiles({ data }) {
           this.setState({ files: data });
-          console.log(this.state.files);
+          console.log('files', this.state.files);
         }
 
         uploadFile(e) {
@@ -60,32 +63,55 @@ import classnames from 'classnames';
         }
         createFolder(e) {
           e.preventDefault();
-          console.log(this.state.newFolderName);
+          const folderData = {
+            name: this.state.newFolderName
+          };
+
+          console.log('folderData', folderData);
+          axios.post('http://localhost:8080/api/folders', folderData)
+            .then(this.updateFiles)
+            .catch(function (error) {
+              console.log(error);
+            });
         }
         updateNewFolderName(e) {
           this.setState({[e.target.name]: e.target.value});
-          console.log(this.state.newFolderName);
+          console.log('newFolderName', this.state.newFolderName);
         }
         createNewFolderForm(e) {
           this.setState({ showNewFolderForm: true });
-
         }
 
         toggleFile(e) {
-
+          const toggledFolderState = this.state.toggledFolders;
+          toggledFolderState[e.target.dataset.fileId] = true;
+          this.setState({ toggledFolders: toggledFolderState })
+          console.log('toggledFoldersState', this.state.toggledFolders);
         }
         fileClick(e) {
-
+          const fileId = e.target.dataset.fileId;
+          fetch(`http://localhost:8080/api/folders/${fileId}/items`)
+            .then((data) => {
+              return data.json();
+            })
+            .then(this.updateFiles)
+            .catch((err) => {
+              console.log(err);
+            });
         }
         downloadFile(e) {
-
+          const fileId = e.target.dataset.fileId;
+          fetch(`http://localhost:8080/api/files/${fileId}/content`)
+            .catch((err) => {
+              console.log(err);
+            });
         }
 
         render() {
           return (
             <div className="file-manager">
               <FileManagerHeader currentDirectory={this.state.currentDirectory} onCreateNewFolderForm={this.createNewFolderForm} onUploadFile={this.uploadFile} />
-              <FileList files={this.state.files} onToggleFile={this.toggleFile} onFileClick={this.fileClick} onCreateFolder={this.createFolder} onUpdateNewFolderName={this.updateNewFolderName} showNewFolderForm={this.state.showNewFolderForm} />
+              <FileList files={this.state.files} onToggleFile={this.toggleFile} onFileClick={this.fileClick} onCreateFolder={this.createFolder} onUpdateNewFolderName={this.updateNewFolderName} showNewFolderForm={this.state.showNewFolderForm} />              
             </div>
           );          
         }
@@ -125,17 +151,16 @@ import classnames from 'classnames';
       }
 
       const FileList = ({files, onToggleFile, onFileClick, showNewFolderForm, onCreateFolder, onUpdateNewFolderName, toggledFolders}) => {
-
         let fileList = files.map((file, index) => {
-          let classNames = (toggledFolders[index]) ? 'toggled' : '';
+          let classNames = ''; // (toggledFolders[index]) ? 'toggled' : '';
 
-          return <File key={index} index={index} classNames={classNames} file={file} />;
+          return <File key={index} index={index} classNames={classNames} file={file} onFileClick={onFileClick} />;
         });
 
         const createFolderFormClasses = classnames({'hidden': !showNewFolderForm})
 
         return (
-          <ul className="file-list" onClick={onFileClick}>
+          <ul className="file-list">
             <li>
               <div className="name">Name</div>
               <div className="type">Type</div>
@@ -160,13 +185,13 @@ import classnames from 'classnames';
         );
       }
 
-      const File = ({index, classNames, file}) => {
+      const File = ({index, classNames, file, onFileClick}) => {
 
         return (
-          <li className={classNames} data-index={index}>
+          <li className={classNames} data-index={index} onClick={onFileClick}>
             <div className="name" data-index={index}>{file.name}</div>
             <div className="type" data-index={index}>{file.type}</div>
-            <div className="size" data-index={index}>{file.size} stars</div>
+            <div className="size" data-index={index}>{file.size}</div>
           </li>
         );
       }

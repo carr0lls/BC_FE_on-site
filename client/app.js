@@ -69,7 +69,7 @@ import axios from 'axios';
 
           console.log('folderData', folderData);
           axios.post('http://localhost:8080/api/folders', folderData)
-            .then(this.updateFiles)
+            .then(this.fetchFiles)
             .catch(function (error) {
               console.log(error);
             });

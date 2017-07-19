@@ -37,8 +37,8 @@ import axios from 'axios';
           this.createFolder = this.createFolder.bind(this);
           this.createNewFolderForm = this.createNewFolderForm.bind(this);
           this.updateNewFolderName = this.updateNewFolderName.bind(this);
-          this.toggleFile = this.toggleFile.bind(this);
-          this.fileClick = this.fileClick.bind(this);
+          this.toggleFolder = this.toggleFolder.bind(this);
+          this.folderClick = this.folderClick.bind(this);
           this.downloadFile = this.downloadFile.bind(this);
         }
 
@@ -97,13 +97,13 @@ import axios from 'axios';
         createNewFolderForm(e) {
           this.setState({ showNewFolderForm: true });
         }
-        toggleFile(e) {
+        toggleFolder(e) {
           const toggledFolderState = this.state.toggledFolders;
           toggledFolderState[e.target.dataset.fileId] = true;
           this.setState({ toggledFolders: toggledFolderState })
           console.log('toggledFoldersState', this.state.toggledFolders);
         }
-        fileClick(e) {
+        folderClick(e) {
           const dataset = e.target.dataset;
 
           this.setState({ 
@@ -130,7 +130,7 @@ import axios from 'axios';
           return (
             <div className="file-manager">
               <FileManagerHeader currentDirectory={this.state.currentDirectory} onCreateNewFolderForm={this.createNewFolderForm} onUploadFile={this.uploadFile} />
-              <FileList files={this.state.files} onToggleFile={this.toggleFile} onFileClick={this.fileClick} onCreateFolder={this.createFolder} onUpdateNewFolderName={this.updateNewFolderName} showNewFolderForm={this.state.showNewFolderForm} />              
+              <FileList files={this.state.files} onToggleFolder={this.toggleFolder} onFolderClick={this.folderClick} onCreateFolder={this.createFolder} onUpdateNewFolderName={this.updateNewFolderName} showNewFolderForm={this.state.showNewFolderForm} />              
             </div>
           );          
         }
@@ -169,11 +169,11 @@ import axios from 'axios';
         );
       }
 
-      const FileList = ({files, onToggleFile, onFileClick, showNewFolderForm, onCreateFolder, onUpdateNewFolderName, toggledFolders}) => {
+      const FileList = ({files, onToggleFolder, onFolderClick, showNewFolderForm, onCreateFolder, onUpdateNewFolderName, toggledFolders}) => {
         let fileList = files.map((file, index) => {
           let classNames = ''; // (toggledFolders[index]) ? 'toggled' : '';
 
-          return <File key={index} index={index} classNames={classNames} file={file} onFileClick={onFileClick} />;
+          return <File key={index} index={index} classNames={classNames} file={file} onFolderClick={onFolderClick} />;
         });
 
         const createFolderFormClasses = classnames({'hidden': !showNewFolderForm})
@@ -202,7 +202,7 @@ import axios from 'axios';
           <li className={classNames}>
             <div className="create-new-folder">
               <form onSubmit={onCreateFolder} onChange={onUpdateNewFolderName}>
-                <input id="new-folder-input" type="text" name="newFolderName" ref={(input) => { textInput = input; }} />
+                <input id="new-folder-input" type="text" name="newFolderName" placeholder="New folder name" ref={(input) => { textInput = input; }} />
                 <button type="submit" className="btn" onClick={handleCreateClick}>Create</button>
               </form>
             </div>
@@ -210,13 +210,17 @@ import axios from 'axios';
         );
       }
 
-      const File = ({index, classNames, file, onFileClick}) => {
+      const File = ({index, classNames, file, onFolderClick}) => {
+        let handleOnClick;
+        
+        if (file.type === 'FOLDER')
+          handleOnClick = onFolderClick
 
         return (
-          <li className={classNames} data-index={index} data-file-id={file._id} data-file-name={file.name} onClick={onFileClick}>
-            <div className="name" data-index={index} data-file-id={file._id} data-file-name={file.name}>{file.name}</div>
-            <div className="type" data-index={index} data-file-id={file._id} data-file-name={file.name}>{file.type}</div>
-            <div className="size" data-index={index} data-file-id={file._id} data-file-name={file.name}>{file.size}</div>
+          <li className={classNames} data-file-id={file._id} data-file-name={file.name} data-file-type={file.type} onClick={handleOnClick}>
+            <div className="name" data-file-id={file._id} data-file-name={file.name} data-file-type={file.type}>{file.name}</div>
+            <div className="type">{file.type}</div>
+            <div className="size">{file.size}</div>
           </li>
         );
       }

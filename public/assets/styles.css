@@ -95,6 +95,15 @@ body {
 .file-manager .file-list .name {
   width: 70%;
 }
+.file-manager .file-list .name:hover {
+  width: 70%;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.file-manager .file-list .heading .name:hover {
+  cursor: default;
+  text-decoration: none;
+}
 .file-manager .file-list .type {
   width: 20%;
 }

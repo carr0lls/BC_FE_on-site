@@ -24,7 +24,8 @@ import axios from 'axios';
         constructor(props) {
           super(props);
           this.state = { 
-            files: [], 
+            files: [],
+            currentFolderId: null,
             currentDirectory: '/', 
             toggledFolders: {},
             showNewFolderForm: false,
@@ -46,42 +47,50 @@ import axios from 'axios';
         }
 
         fetchFiles() {
-          axios.get('http://localhost:8080/api/files')
+          const folderId = this.state.currentFolderId;
+          if (folderId) {
+            axios.get(`http://localhost:8080/api/folders/${folderId}/items`)
             .then(this.updateFiles)
             .catch(function (error) {
               console.log(error);
             });
+          }
+          else {
+            axios.get(`http://localhost:8080/api/files`)
+              .then(this.updateFiles)
+              .catch(function (error) {
+                console.log(error);
+              });
+          }
         }
-
         updateFiles({ data }) {
           this.setState({ files: data });
-          console.log('files', this.state.files);
+          console.log('state', this.state);
         }
 
-        uploadFile(e) {
-
-        }
         createFolder(e) {
           e.preventDefault();
           const folderData = {
             name: this.state.newFolderName
           };
 
-          console.log('folderData', folderData);
-          axios.post('http://localhost:8080/api/folders', folderData)
+          this.setState({ newFolderName: '', showNewFolderForm: false });
+
+          axios.post(`http://localhost:8080/api/folders?parentId=${this.state.currentFolderId}`, folderData)
             .then(this.fetchFiles)
             .catch(function (error) {
               console.log(error);
             });
         }
+        uploadFile(e) {
+
+        }
         updateNewFolderName(e) {
-          this.setState({[e.target.name]: e.target.value});
-          console.log('newFolderName', this.state.newFolderName);
+          this.setState({ [e.target.name]: e.target.value });
         }
         createNewFolderForm(e) {
           this.setState({ showNewFolderForm: true });
         }
-
         toggleFile(e) {
           const toggledFolderState = this.state.toggledFolders;
           toggledFolderState[e.target.dataset.fileId] = true;
@@ -89,11 +98,15 @@ import axios from 'axios';
           console.log('toggledFoldersState', this.state.toggledFolders);
         }
         fileClick(e) {
-          const fileId = e.target.dataset.fileId;
-          fetch(`http://localhost:8080/api/folders/${fileId}/items`)
-            .then((data) => {
-              return data.json();
-            })
+          const dataset = e.target.dataset;
+
+          this.setState({ 
+            isLoadingFiles: true, 
+            currentFolderId: dataset.fileId,
+            currentDirectory: `${this.state.currentDirectory}${dataset.fileName}/`
+          });
+
+          axios.get(`http://localhost:8080/api/folders/${dataset.fileId}/items`)
             .then(this.updateFiles)
             .catch((err) => {
               console.log(err);
@@ -101,7 +114,7 @@ import axios from 'axios';
         }
         downloadFile(e) {
           const fileId = e.target.dataset.fileId;
-          fetch(`http://localhost:8080/api/files/${fileId}/content`)
+          axios.get(`http://localhost:8080/api/files/${fileId}/content`)
             .catch((err) => {
               console.log(err);
             });
@@ -161,7 +174,7 @@ import axios from 'axios';
 
         return (
           <ul className="file-list">
-            <li>
+            <li className="heading">
               <div className="name">Name</div>
               <div className="type">Type</div>
               <div className="size">Size</div>
@@ -173,12 +186,18 @@ import axios from 'axios';
       }
 
       const CreateFolderForm = ({classNames, onCreateFolder, onUpdateNewFolderName}) => {
+        let textInput = null;
+
+        function handleCreateClick() {
+          textInput.value = '';
+        }
+
         return (
           <li className={classNames}>
             <div className="create-new-folder">
               <form onSubmit={onCreateFolder} onChange={onUpdateNewFolderName}>
-                <input id="new-folder-input" type="text" name="newFolderName" />
-                <button type="submit" className="btn">Create</button>
+                <input id="new-folder-input" type="text" name="newFolderName" ref={(input) => { textInput = input; }} />
+                <button type="submit" className="btn" onClick={handleCreateClick}>Create</button>
               </form>
             </div>
           </li>
@@ -188,10 +207,10 @@ import axios from 'axios';
       const File = ({index, classNames, file, onFileClick}) => {
 
         return (
-          <li className={classNames} data-index={index} onClick={onFileClick}>
-            <div className="name" data-index={index}>{file.name}</div>
-            <div className="type" data-index={index}>{file.type}</div>
-            <div className="size" data-index={index}>{file.size}</div>
+          <li className={classNames} data-index={index} data-file-id={file._id} data-file-name={file.name} onClick={onFileClick}>
+            <div className="name" data-index={index} data-file-id={file._id} data-file-name={file.name}>{file.name}</div>
+            <div className="type" data-index={index} data-file-id={file._id} data-file-name={file.name}>{file.type}</div>
+            <div className="size" data-index={index} data-file-id={file._id} data-file-name={file.name}>{file.size}</div>
           </li>
         );
       }

@@ -97,9 +97,9 @@ import axios from 'axios';
         createNewFolderForm(e) {
           this.setState({ showNewFolderForm: true });
         }
-        toggleFolder(e) {
+        toggleFolder(folderId) {
           const toggledFolderState = this.state.toggledFolders;
-          toggledFolderState[e.target.dataset.fileId] = true;
+          toggledFolderState[folderId] = true;
           this.setState({ toggledFolders: toggledFolderState })
           console.log('toggledFoldersState', this.state.toggledFolders);
         }
@@ -130,7 +130,7 @@ import axios from 'axios';
           return (
             <div className="file-manager">
               <FileManagerHeader currentDirectory={this.state.currentDirectory} onCreateNewFolderForm={this.createNewFolderForm} onUploadFile={this.uploadFile} />
-              <FileList files={this.state.files} onToggleFolder={this.toggleFolder} onFolderClick={this.folderClick} onCreateFolder={this.createFolder} onUpdateNewFolderName={this.updateNewFolderName} showNewFolderForm={this.state.showNewFolderForm} />              
+              <FileList files={this.state.files} onToggleFolder={this.toggleFolder} onDownloadFile={this.downloadFile} onFolderClick={this.folderClick} onCreateFolder={this.createFolder} onUpdateNewFolderName={this.updateNewFolderName} showNewFolderForm={this.state.showNewFolderForm} />              
             </div>
           );          
         }
@@ -169,11 +169,11 @@ import axios from 'axios';
         );
       }
 
-      const FileList = ({files, onToggleFolder, onFolderClick, showNewFolderForm, onCreateFolder, onUpdateNewFolderName, toggledFolders}) => {
+      const FileList = ({files, onToggleFolder, onFolderClick, onDownloadFile, showNewFolderForm, onCreateFolder, onUpdateNewFolderName, toggledFolders}) => {
         let fileList = files.map((file, index) => {
           let classNames = ''; // (toggledFolders[index]) ? 'toggled' : '';
 
-          return <File key={index} index={index} classNames={classNames} file={file} onFolderClick={onFolderClick} />;
+          return <File key={index} index={index} classNames={classNames} file={file} onFolderClick={onFolderClick} onToggleFolder={onToggleFolder} onDownloadFile={onDownloadFile} />;
         });
 
         const createFolderFormClasses = classnames({'hidden': !showNewFolderForm})
@@ -210,17 +210,30 @@ import axios from 'axios';
         );
       }
 
-      const File = ({index, classNames, file, onFolderClick}) => {
-        let handleOnClick;
-        
-        if (file.type === 'FOLDER')
-          handleOnClick = onFolderClick
+      const File = ({index, classNames, file, onFolderClick, onToggleFolder, onDownloadFile}) => {
+        let handleOnFolderClick, toggleButton, downloadButton;
+
+        switch (file.type) {
+          case 'FOLDER':
+            handleOnFolderClick = onFolderClick;
+            toggleButton = <Button onClick={(e) => { onToggleFolder(file._id); }} text={'+'} classNames={'btn'} />;
+            downloadButton = <Button onClick={onDownloadFile} text={'Download'} classNames={'btn'} />;
+            break;
+          case 'FILE':
+            break;
+          default:
+            break;
+        }
 
         return (
-          <li className={classNames} data-file-id={file._id} data-file-name={file.name} data-file-type={file.type} onClick={handleOnClick}>
-            <div className="name" data-file-id={file._id} data-file-name={file.name} data-file-type={file.type}>{file.name}</div>
+          <li className={classNames}>
+            <div className="name">
+              { toggleButton }            
+              <div data-file-id={file._id} data-file-name={file.name} data-file-type={file.type} onClick={handleOnFolderClick}>{file.name}</div>
+            </div>
             <div className="type">{file.type}</div>
             <div className="size">{file.size}</div>
+            { downloadButton }
           </li>
         );
       }

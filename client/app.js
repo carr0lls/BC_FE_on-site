@@ -89,7 +89,19 @@ import axios from 'axios';
             });
         }
         uploadFile(e) {
+/*          const fileBlob = new Blob([e.target.files[0]], {type : 'multipart'});
+          const fileData = {
+            file: e.target.files[0],
+            filename: e.target.files[0].name,
+            size: e.target.files[0].size
+          }
+          console.log(fileData);
 
+          axios.post(`http://localhost:8080/api/files?parentId=${this.state.currentFolderId}`, fileData)
+            .then(this.fetchFiles)
+            .catch(function (error) {
+              console.log(error);
+            });*/
         }
         updateNewFolderName(e) {
           this.setState({ [e.target.name]: e.target.value });
@@ -99,27 +111,27 @@ import axios from 'axios';
         }
         toggleFolder(folderId) {
           const toggledFolderState = this.state.toggledFolders;
-          toggledFolderState[folderId] = true;
+          toggledFolderState[folderId] = (!toggledFolderState[folderId]) ? true : false;
           this.setState({ toggledFolders: toggledFolderState })
           console.log('toggledFoldersState', this.state.toggledFolders);
         }
-        folderClick(e) {
-          const dataset = e.target.dataset;
-
+        folderClick(fileId, fileName) {
           this.setState({ 
             isLoadingFiles: true, 
-            currentFolderId: dataset.fileId,
-            currentDirectory: `${this.state.currentDirectory}${dataset.fileName}/`
+            currentFolderId: fileId,
+            currentDirectory: `${this.state.currentDirectory}${fileName}/`
           });
 
-          axios.get(`http://localhost:8080/api/folders/${dataset.fileId}/items`)
+          axios.get(`http://localhost:8080/api/folders/${fileId}/items`)
             .then(this.updateFiles)
             .catch((err) => {
               console.log(err);
             });
         }
-        downloadFile(e) {
-          const fileId = e.target.dataset.fileId;
+        downloadFile(fileId, fileType) {
+          if (fileType === 'FOLDER')
+            return;
+
           axios.get(`http://localhost:8080/api/files/${fileId}/content`)
             .catch((err) => {
               console.log(err);
@@ -157,15 +169,15 @@ import axios from 'axios';
       const FileManagerActions = ({onCreateNewFolderForm, onUploadFile}) => {
         return (
           <div className="actions">
-            <Button onClick={onCreateNewFolderForm} text={'New Folder'} classNames={'btn'} />
-            <Button onClick={onUploadFile} text={'Upload File'} classNames={'btn'} />
+            <Button onClick={onCreateNewFolderForm} classNames={'btn'} >New Folder</Button>
+            <Button classNames={'btn'} >Upload File</Button>
           </div>
         );
       }
 
-      const Button = ({text, onClick, classNames}) => {
+      const Button = ({onClick, classNames, children}) => {
         return (
-          <button className={classNames} onClick={onClick}>{text}</button>
+          <button className={classNames} onClick={onClick}>{children}</button>
         );
       }
 
@@ -215,11 +227,11 @@ import axios from 'axios';
 
         switch (file.type) {
           case 'FOLDER':
-            handleOnFolderClick = onFolderClick;
-            toggleButton = <Button onClick={(e) => { onToggleFolder(file._id); }} text={'+'} classNames={'btn'} />;
-            downloadButton = <Button onClick={onDownloadFile} text={'Download'} classNames={'btn'} />;
+            handleOnFolderClick = (e) => { onFolderClick(file._id, file.name); };
+            toggleButton = <Button onClick={(e) => { onToggleFolder(file._id); }} classNames={'btn'}>+</Button>;
             break;
           case 'FILE':
+            downloadButton = <Button onClick={(e) => { onDownloadFile(file._id, file.type); }} classNames={'btn'}>Download</Button>;
             break;
           default:
             break;
@@ -229,7 +241,7 @@ import axios from 'axios';
           <li className={classNames}>
             <div className="name">
               { toggleButton }            
-              <div data-file-id={file._id} data-file-name={file.name} data-file-type={file.type} onClick={handleOnFolderClick}>{file.name}</div>
+              <div onClick={handleOnFolderClick}>{file.name}</div>
             </div>
             <div className="type">{file.type}</div>
             <div className="size">{file.size}</div>

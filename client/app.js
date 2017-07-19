@@ -25,7 +25,7 @@ import axios from 'axios';
           super(props);
           this.state = { 
             files: [],
-            currentFolderId: null,
+            currentFolderId: '',
             currentDirectory: '/', 
             toggledFolders: {},
             showNewFolderForm: false,
@@ -70,8 +70,14 @@ import axios from 'axios';
 
         createFolder(e) {
           e.preventDefault();
+          const newFolderName = this.state.newFolderName.trim();
+          if (newFolderName === '') {
+            alert('Folder name cannot be empty!');
+            return;
+          }
+
           const folderData = {
-            name: this.state.newFolderName
+            name: newFolderName
           };
 
           this.setState({ newFolderName: '', showNewFolderForm: false });

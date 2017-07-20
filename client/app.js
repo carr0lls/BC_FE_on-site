@@ -136,7 +136,8 @@ import axios from 'axios';
           this.setState({ 
             isLoadingFiles: true, 
             currentFolderId: fileId,
-            currentDirectory: `${this.state.currentDirectory}${fileName}/`
+            currentDirectory: `${this.state.currentDirectory}${fileName}/`,
+            subfiles: {}
           });
 
           axios.get(`http://localhost:8080/api/folders/${fileId}/items`)

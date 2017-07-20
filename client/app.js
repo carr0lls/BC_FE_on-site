@@ -25,6 +25,7 @@ import axios from 'axios';
           super(props);
           this.state = { 
             files: [],
+            subfiles: {},
             currentFolderId: '',
             currentDirectory: '/', 
             toggledFolders: {},
@@ -33,6 +34,8 @@ import axios from 'axios';
           };
           this.fetchFiles = this.fetchFiles.bind(this);
           this.updateFiles = this.updateFiles.bind(this);
+          this.fetchSubfolderFiles = this.fetchSubfolderFiles.bind(this);
+          this.updateSubfolderFiles = this.updateSubfolderFiles.bind(this);
           this.uploadFile = this.uploadFile.bind(this);
           this.createFolder = this.createFolder.bind(this);
           this.createNewFolderForm = this.createNewFolderForm.bind(this);
@@ -67,7 +70,20 @@ import axios from 'axios';
           this.setState({ files: data });
           console.log('state', this.state);
         }
-
+        fetchSubfolderFiles(folderId) {
+          axios.get(`http://localhost:8080/api/folders/${folderId}/items`)
+          .then((response) => { return {folderId, data: response.data }; })
+          .then(this.updateSubfolderFiles)
+          .catch(function (error) {
+            console.log(error);
+          });
+        }
+        updateSubfolderFiles({ folderId, data }) {
+          const subfilesState = this.state.subfiles;
+          subfilesState[folderId] = data;
+          this.setState({ subfiles: subfilesState });
+          console.log('state', this.state);
+        }        
         createFolder(e) {
           e.preventDefault();
           const newFolderName = this.state.newFolderName.trim();
@@ -89,7 +105,7 @@ import axios from 'axios';
             });
         }
         uploadFile(e) {
-/*          const fileBlob = new Blob([e.target.files[0]], {type : 'multipart'});
+          const fileBlob = new Blob([e.target.files[0]], {type : 'multipart'});
           const fileData = {
             file: e.target.files[0],
             filename: e.target.files[0].name,
@@ -101,7 +117,7 @@ import axios from 'axios';
             .then(this.fetchFiles)
             .catch(function (error) {
               console.log(error);
-            });*/
+            });
         }
         updateNewFolderName(e) {
           this.setState({ [e.target.name]: e.target.value });
@@ -112,8 +128,9 @@ import axios from 'axios';
         toggleFolder(folderId) {
           const toggledFolderState = this.state.toggledFolders;
           toggledFolderState[folderId] = (!toggledFolderState[folderId]) ? true : false;
-          this.setState({ toggledFolders: toggledFolderState })
+          this.setState({ toggledFolders: toggledFolderState });
           console.log('toggledFoldersState', this.state.toggledFolders);
+          this.fetchSubfolderFiles(folderId);
         }
         folderClick(fileId, fileName) {
           this.setState({ 
@@ -142,7 +159,7 @@ import axios from 'axios';
           return (
             <div className="file-manager">
               <FileManagerHeader currentDirectory={this.state.currentDirectory} onCreateNewFolderForm={this.createNewFolderForm} onUploadFile={this.uploadFile} />
-              <FileList files={this.state.files} onToggleFolder={this.toggleFolder} onDownloadFile={this.downloadFile} onFolderClick={this.folderClick} onCreateFolder={this.createFolder} onUpdateNewFolderName={this.updateNewFolderName} showNewFolderForm={this.state.showNewFolderForm} />              
+              <FileList files={this.state.files} subfiles={this.state.subfiles} toggledFolders={this.state.toggledFolders} onToggleFolder={this.toggleFolder} onDownloadFile={this.downloadFile} onFolderClick={this.folderClick} onCreateFolder={this.createFolder} onUpdateNewFolderName={this.updateNewFolderName} showNewFolderForm={this.state.showNewFolderForm} />              
             </div>
           );          
         }
@@ -170,7 +187,7 @@ import axios from 'axios';
         return (
           <div className="actions">
             <Button onClick={onCreateNewFolderForm} classNames={'btn'} >New Folder</Button>
-            <Button classNames={'btn'} >Upload File</Button>
+            <input type="file" onChange={onUploadFile} className="btn" />
           </div>
         );
       }
@@ -181,22 +198,22 @@ import axios from 'axios';
         );
       }
 
-      const FileList = ({files, onToggleFolder, onFolderClick, onDownloadFile, showNewFolderForm, onCreateFolder, onUpdateNewFolderName, toggledFolders}) => {
+      const FileList = ({files, subfiles, toggledFolders, onToggleFolder, onFolderClick, onDownloadFile, showNewFolderForm, onCreateFolder, onUpdateNewFolderName}) => {
         let fileList = files.map((file, index) => {
-          let classNames = ''; // (toggledFolders[index]) ? 'toggled' : '';
-
-          return <File key={index} index={index} classNames={classNames} file={file} onFolderClick={onFolderClick} onToggleFolder={onToggleFolder} onDownloadFile={onDownloadFile} />;
+          return <File key={index} index={index} classNames={'file'} file={file} subfiles={subfiles} toggledFolders={toggledFolders} onFolderClick={onFolderClick} onToggleFolder={onToggleFolder} onDownloadFile={onDownloadFile} />;
         });
 
-        const createFolderFormClasses = classnames({'hidden': !showNewFolderForm})
+        const createFolderFormClasses = classnames('file', {'hidden': !showNewFolderForm})
 
         return (
           <ul className="file-list">
-            <li className="heading">
-              <div className="name">Name</div>
-              <div className="type">Type</div>
-              <div className="size">Size</div>
-            </li>
+            <div className="file">
+              <li className="heading">
+                <div className="name">Name</div>
+                <div className="type">Type</div>
+                <div className="size">Size</div>
+              </li>
+            </div>
             <CreateFolderForm classNames={createFolderFormClasses} onCreateFolder={onCreateFolder} onUpdateNewFolderName={onUpdateNewFolderName} />
             { fileList }
           </ul>
@@ -211,24 +228,34 @@ import axios from 'axios';
         }
 
         return (
-          <li className={classNames}>
-            <div className="create-new-folder">
-              <form onSubmit={onCreateFolder} onChange={onUpdateNewFolderName}>
-                <input id="new-folder-input" type="text" name="newFolderName" placeholder="New folder name" ref={(input) => { textInput = input; }} />
-                <button type="submit" className="btn" onClick={handleCreateClick}>Create</button>
-              </form>
-            </div>
-          </li>
+          <div className={classNames}>
+            <li>
+              <div className="create-new-folder">
+                <form onSubmit={onCreateFolder} onChange={onUpdateNewFolderName}>
+                  <input id="new-folder-input" type="text" name="newFolderName" placeholder="New folder name" ref={(input) => { textInput = input; }} />
+                  <button type="submit" className="btn" onClick={handleCreateClick}>Create</button>
+                </form>
+              </div>
+            </li>
+          </div>
         );
       }
 
-      const File = ({index, classNames, file, onFolderClick, onToggleFolder, onDownloadFile}) => {
-        let handleOnFolderClick, toggleButton, downloadButton;
+      const File = ({index, classNames, file, subfiles, toggledFolders, onFolderClick, onToggleFolder, onDownloadFile}) => {
+        let handleOnFolderClick, toggleButton, downloadButton, toggleText, subfilesList;
+
+        toggleText = (toggledFolders[file._id]) ? '-' : '+';
+
+        if (toggledFolders[file._id] && subfiles[file._id]) {
+          subfilesList = subfiles[file._id].map((subfile, index) => {
+            return <File key={index} index={index} classNames={'file subfile'} file={subfile} subfiles={subfiles} toggledFolders={toggledFolders} onFolderClick={onFolderClick} onToggleFolder={onToggleFolder} onDownloadFile={onDownloadFile} />;
+          });
+        }
 
         switch (file.type) {
           case 'FOLDER':
             handleOnFolderClick = (e) => { onFolderClick(file._id, file.name); };
-            toggleButton = <Button onClick={(e) => { onToggleFolder(file._id); }} classNames={'btn'}>+</Button>;
+            toggleButton = <Button onClick={(e) => { onToggleFolder(file._id); }} classNames={'btn'}>{toggleText}</Button>;
             break;
           case 'FILE':
             downloadButton = <Button onClick={(e) => { onDownloadFile(file._id, file.type); }} classNames={'btn'}>Download</Button>;
@@ -238,15 +265,18 @@ import axios from 'axios';
         }
 
         return (
-          <li className={classNames}>
-            <div className="name">
-              { toggleButton }            
-              <div onClick={handleOnFolderClick}>{file.name}</div>
-            </div>
-            <div className="type">{file.type}</div>
-            <div className="size">{file.size}</div>
-            { downloadButton }
-          </li>
+          <div className={classNames}>
+            <li>
+              <div className="name">
+                { toggleButton }            
+                <div onClick={handleOnFolderClick}>{file.name}</div>
+              </div>
+              <div className="type">{file.type}</div>
+              <div className="size">{file.size}</div>
+              { downloadButton }
+            </li>
+            { subfilesList }
+          </div>
         );
       }
 

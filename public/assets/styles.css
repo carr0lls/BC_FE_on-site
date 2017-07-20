@@ -73,9 +73,6 @@ body {
   padding: 10px 0;
   width: 100%;
 }
-.file-manager .file-list li.hidden {
-  display: none;
-}
 .file-manager .file-list li.toggled {
   background: #FF8F12;
 }
@@ -109,6 +106,12 @@ body {
 .file-manager .file-list .download {
   width: 10%;
 }
+.file-manager .file-list .file {
+
+}
+.file-manager .file-list .file.subfile {
+  background: #e1dede;
+}
 
 .btn {
   margin: 0 10px;
@@ -124,6 +127,10 @@ body {
   background: #193A54;
   border: 1px solid #193A54;
   cursor: pointer;
+}
+
+.hidden {
+  display: none;
 }
 
 input[type="text"]::placeholder {

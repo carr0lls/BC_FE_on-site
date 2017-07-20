@@ -187,7 +187,7 @@ import axios from 'axios';
         return (
           <div className="actions">
             <Button onClick={onCreateNewFolderForm} classNames={'btn'} >New Folder</Button>
-            <input type="file" onChange={onUploadFile} className="btn" />
+            <Button classNames={'btn'} >Upload File</Button>
           </div>
         );
       }
